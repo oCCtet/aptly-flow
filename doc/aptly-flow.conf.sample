@@ -1,0 +1,33 @@
+# ~/.aptly-flow.conf or /etc/aptly-flow.conf
+# aptly-flow configuration file
+#
+# This is a Perl code fragment.
+
+# Set to zero to disable, i.e. to make the operations to
+# actually happen.
+our $dryrun              = 1;
+
+# File containing GPG signing passphrase. Commented out
+# or empty means GPG shall not receive passphrase, so it
+# may query it interactively.
+our $passphrase_file     = "$ENV{HOME}/signkey.pass";
+
+# Set to zero to not drop obsoleted snapshots.
+our $drop_old_snapshots  = 1;
+
+# Incoming package system; format is
+#   key=repo, data=[indir,dist,prefix]
+our %incoming_db = (
+    "target_repo"            =>  [ "/incoming/directory/", "dist", "prefix" ],
+);
+
+# Automatically re-snapshottable mirrors/repos, keyed
+# by the prefix.
+our %mirror_db = (
+    "prefix"                 =>  [
+                                 "distX",
+                                 "distX-updates",
+                                 "distX-security",
+                                 "distX-backports"
+                             ],
+);
