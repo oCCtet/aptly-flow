@@ -18,12 +18,17 @@
 ##
 ##     process incoming
 ##     process mirrors
-##         process *all* configured (in the config file) incoming_db and
-##         mirror_db items, respectively
+##     process rsync
+##         process *all* configured (in the config file) incoming_db,
+##         mirror_db and rsync_db items, respectively
+##
+##     db gc
+##         garbage collect (compact) aptly db
 ##
 ##     help flow
 ##         show this help
 ##
+## To disable aptly-flow, touch file /etc/aptly_flow_disabled.
 
 use strict;
 use warnings;
@@ -31,6 +36,9 @@ use re '/aa';
 use open qw< :encoding(UTF-8) >;
 
 my $min_aptly_version = 90;
+
+die "Disabled. Remove file /etc/aptly_flow_disabled to enable.\n"
+   if stat("/etc/aptly_flow_disabled");
 
 #-------------------------------------------------------------------------------
 # Options that can be overridded via the user- or site-specific
@@ -41,6 +49,7 @@ our $passphrase_file = '';
 our $drop_old_snapshots = 0;
 our %incoming_db;
 our %mirror_db;
+our %rsync_db;
 
 for my $file ("$ENV{HOME}/.aptly-flow.conf",
               "/etc/aptly-flow.conf")
@@ -62,9 +71,11 @@ my $inrepo_arg;
 
 my $do_re_snapshot_and_publish = 0;
 my $do_update_mirrors = 0;
+my $do_db_gc = 0;
 my $do_process_incoming = 0;
 my $do_process_all_incoming = 0;
 my $do_process_all_mirrors = 0;
+my $do_process_rsync = 0;
 
 die "usage: $0 <command> <action> [args ...]\n"
     unless $command_arg and $action_arg;
@@ -116,6 +127,14 @@ for ($command_arg)
             }
         }
     }
+    if (/^db$/) {
+        for ($action_arg) {
+            if (/^gc$/) {
+                $do_db_gc = 1;
+                last SWITCH;
+            }
+        }
+    }
     if (/^process$/) {
         for ($action_arg) {
             if (/^incoming$/) {
@@ -124,6 +143,10 @@ for ($command_arg)
             }
             if (/^mirrors$/) {
                 $do_process_all_mirrors = 1;
+                last SWITCH;
+            }
+            if (/^rsync$/) {
+                $do_process_rsync = 1;
                 last SWITCH;
             }
         }
@@ -157,6 +180,9 @@ update_mirrors()
 process_incoming($indir_arg, $inrepo_arg, $distro_arg, $prefix_arg)
     if $do_process_incoming == 1;
 
+database_cleanup()
+    if $do_db_gc == 1;
+
 if ($do_process_all_incoming == 1) {
     foreach my $repo (keys %incoming_db) {
         process_incoming($incoming_db{$repo}[0], $repo,
@@ -172,6 +198,36 @@ if ($do_process_all_mirrors == 1) {
     }
 }
 
+if ($do_process_rsync == 1) {
+    my $rsync_opts="--recursive --times --links --hard-links --delete --delete-after";
+    my $fh;
+    my $basedir;
+
+    # Resolve aptly rootDir
+    if (stat("$ENV{HOME}/.aptly.conf")) {
+        open($fh, '<', "$ENV{HOME}/.aptly.conf")
+            or die "Failed to open aptly configuration file: $!\n";
+    } else {
+        open($fh, '<', "/etc/aptly.conf")
+            or die "Failed to open aptly configuration file: $!\n";
+    }
+    while (<$fh>) {
+        $basedir = $1 if /^\s*"rootDir"\s*:\s*"(.*)"\s*,?\s*/;
+    }
+    close($fh);
+    $basedir = "$basedir/public";
+
+    foreach my $rec (keys %rsync_db) {
+        my $url  = $rsync_db{$rec}[0];
+        my $dist = $rsync_db{$rec}[1];
+        my $pref = $rsync_db{$rec}[2];
+        my $dir  = $rsync_db{$rec}[3];
+
+        system("${comment}rsync $rsync_opts rsync://$url/dists/$dist/main/$dir $basedir/$pref/dists/$dist/main/") == 0
+            or die "Failed to rsync $dir for $dist from $url to $basedir/$pref\n";
+    }
+}
+
 #-------------------------------------------------------------------------------
 # Update all mirrors.
 
@@ -179,6 +235,12 @@ sub update_mirrors
 {
     system("aptly mirror list -raw | xargs -n 1 ${comment}aptly mirror update") == 0
         or die "Failed to update all mirrors\n";
+}
+
+sub database_cleanup
+{
+    system("${comment}aptly db cleanup") == 0
+        or die "Failed to garbage-collect the database\n";
 }
 
 #-------------------------------------------------------------------------------
@@ -191,7 +253,7 @@ sub re_snapshot_and_publish
 {
     my ($distro, $prefix) = @_;
 
-    my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) =
+    my ($sec, $min, $hour, $mday, $mon, $year, undef, undef, undef) =
         localtime(time);
     my $timestamp = sprintf("%04d%02d%02dT%02d%02d%02d",
         $year + 1900, $mon + 1, $mday, $hour, $min, $sec);
