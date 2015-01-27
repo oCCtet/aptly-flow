@@ -13,8 +13,8 @@
 ##         switching them, and dropping the obsoleted snapshots
 ##
 ##     incoming process <incoming_dir> <repo> <distribution> [<prefix>]
-##         look for .dsc, .udeb and .deb files in incoming_dir, add
-##         them to repo, and update the distribution
+##         look for .changes files in incoming_dir, add referenced
+##         packages to repo, and update the distribution
 ##
 ##     process incoming
 ##     process mirrors
@@ -212,10 +212,10 @@ if ($do_process_rsync == 1) {
             or die "Failed to open aptly configuration file: $!\n";
     }
     while (<$fh>) {
-        $basedir = $1 if /^\s*"rootDir"\s*:\s*"(.*)"\s*,?\s*/;
+        $basedir = "$1/public"
+            if /^\s*"rootDir"\s*:\s*"(.*)"\s*,?\s*/;
     }
     close($fh);
-    $basedir = "$basedir/public";
 
     foreach my $rec (keys %rsync_db) {
         my $url  = $rsync_db{$rec}[0];
@@ -324,9 +324,8 @@ sub process_incoming
 {
     my ($incoming_dir, $target_repo, $distro, $prefix) = @_;
 
-    chdir $incoming_dir or die "Failed to cd to $incoming_dir: $!\n";
-    unless (my @files = glob("*.dsc *.udeb *.deb")) {
-        warn "No files to process in $incoming_dir\n";
+    unless (my @files = glob("$incoming_dir/*.changes")) {
+        warn "No .changes files to process in $incoming_dir\n";
         return;
     }
 
