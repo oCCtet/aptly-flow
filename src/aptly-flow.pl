@@ -295,7 +295,7 @@ sub re_snapshot_and_publish
     # Switch snapshots of the published distribution.
     my $complist = join ',', keys %components;
     my $snaplist = join ' ', values %components;
-    print $fh "publish switch $gpgopts -component=$complist $distro $prefix $snaplist\n"
+    print $fh "publish switch -batch $gpgopts -component=$complist $distro $prefix $snaplist\n"
         or die "Failed to update command file: $!, stopped";
 
     # Drop the old, now obsolete, snapshots. If they happen
@@ -336,7 +336,7 @@ sub process_incoming
 
     print $fh "repo add -force-replace -remove-files $target_repo $incoming_dir\n"
         or die "Failed to update command file: $!, stopped";
-    print $fh "publish update -force-overwrite $gpgopts $distro $prefix\n"
+    print $fh "publish update -force-overwrite -batch $gpgopts $distro $prefix\n"
         or die "Failed to update command file: $!, stopped";
 
     close($fh);
