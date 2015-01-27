@@ -54,6 +54,8 @@ die "Publickey '$publickey': $!\n" unless stat($publickey);
 
 #-------------------------------------------------------------------------------
 # Check if sudo is needed and run the appropriate gpg command.
+# (The command 'sudo -u <user> ...' is not <user>'ish enough for GPG,
+#  so 'sudo su -c ... <user>' is used instead.)
 
 my $sudoprefix = '';
 my $sudosuffix = '';
@@ -64,7 +66,8 @@ unless ($username eq getpwuid($<)) {
     $sudosuffix = "' $username";
 }
 
-system("${sudoprefix}gpg -v --no-default-keyring --keyring $keyring --import $publickey${sudosuffix}") == 0
+my $gpgopts = '-v --no-tty --no-default-keyring';
+system("${sudoprefix}gpg $gpgopts --keyring $keyring --import $publickey${sudosuffix}") == 0
     or die "Failed to import GPG publickey '$publickey'\n";
 
 print "Publickey '$publickey' may now be removed.\n";
