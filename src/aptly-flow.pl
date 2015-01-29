@@ -7,6 +7,9 @@
 ##     update mirrors
 ##         update all configured mirrors
 ##
+##     update graph
+##         update mirror/repo/snapshot graph
+##
 ##     publish mirror <distribution> [<prefix>]
 ##         re-publish the distribution by re-snapshotting each
 ##         component (whose source is a mirror or local repo),
@@ -34,6 +37,7 @@ use strict;
 use warnings;
 use re '/aa';
 use open qw< :encoding(UTF-8) >;
+use File::Copy;
 
 my $min_aptly_version = 90;
 
@@ -47,6 +51,7 @@ die "Disabled. Remove file /etc/aptly_flow_disabled to enable.\n"
 our $dryrun = 1;
 our $passphrase_file = '';
 our $drop_old_snapshots = 0;
+our $graph_pathname = '/tmp/aptly-graph.png';
 our %incoming_db;
 our %mirror_db;
 our %rsync_db;
@@ -71,6 +76,7 @@ my $inrepo_arg;
 
 my $do_re_snapshot_and_publish = 0;
 my $do_update_mirrors = 0;
+my $do_update_graph = 0;
 my $do_db_gc = 0;
 my $do_process_incoming = 0;
 my $do_process_all_incoming = 0;
@@ -108,6 +114,10 @@ for ($command_arg)
         for ($action_arg) {
             if (/^mirrors$/) {
                 $do_update_mirrors = 1;
+                last SWITCH;
+            }
+            if (/^graph$/) {
+                $do_update_graph = 1;
                 last SWITCH;
             }
         }
@@ -177,6 +187,9 @@ re_snapshot_and_publish($distro_arg, $prefix_arg)
 update_mirrors()
     if $do_update_mirrors == 1;
 
+update_graph()
+    if $do_update_graph == 1;
+
 process_incoming($indir_arg, $inrepo_arg, $distro_arg, $prefix_arg)
     if $do_process_incoming == 1;
 
@@ -229,12 +242,21 @@ if ($do_process_rsync == 1) {
 }
 
 #-------------------------------------------------------------------------------
-# Update all mirrors.
+# Database actions...
 
 sub update_mirrors
 {
     system("aptly mirror list -raw | xargs -n 1 ${comment}aptly mirror update") == 0
         or die "Failed to update all mirrors\n";
+}
+
+sub update_graph
+{
+    exit 0 if $dryrun == 1;
+    `aptly graph` =~ /^Rendered[\w\s]*file:\s(.*)/m
+        or die "Failed to generate graph\n";
+    move "$1", "$graph_pathname"
+        or die "Failed to move $1 to $graph_pathname: $!\n";
 }
 
 sub database_cleanup
