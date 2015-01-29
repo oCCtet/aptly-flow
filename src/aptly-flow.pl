@@ -212,7 +212,7 @@ if ($do_process_all_mirrors == 1) {
 }
 
 if ($do_process_rsync == 1) {
-    my $rsync_opts="--recursive --times --links --hard-links --delete --delete-after";
+    my $rsync_opts="-v --recursive --times --links --hard-links --delete --delete-after";
     my $fh;
     my $basedir;
 

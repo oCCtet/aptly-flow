@@ -1,0 +1,27 @@
+Aptly Flow
+==========
+
+The aptly-flow and friends is a collection of helper tools
+that complement aptly <www.aptly.info> in Debian/Ubuntu
+Archive maintenance.
+
+The tools are:
+
+  * aptly-flow
+
+    Streamline selected tasks that are difficult (take a lot of
+    steps) with the bare aptly. Most tasks require a suitable
+    configuration in file ~/.aptly-flow.conf or /etc/aptly-flow.conf
+    (an example file is in the doc/ directory).
+
+  * dinstall-key
+
+    Install debian packager/uploader GPG signing key into the
+    mini-dinstall's (first) extra keyring. Runs sudo as needed;
+    the user-to-run-as is read from the /etc/vsftpd.conf, and
+    the extra keyring from the /etc/mini-dinstall.conf file.
+    (Assumes that vsFTPd is used as the FTP server to provide
+    the upload queue for the dput program.)
+
+DISCLAIMER: The aptly-flow is not endorsed nor connected to
+the aptly or its author in any way.
