@@ -1,9 +1,8 @@
-Aptly Flow
-==========
+aptly-flow README
+=================
 
-The aptly-flow and friends is a collection of helper tools
-that complement aptly <www.aptly.info> in Debian/Ubuntu
-Archive maintenance.
+The aptly-flow and friends is a collection of helper tools that
+complement aptly <www.aptly.info> in APT Archive maintenance.
 
 The tools are:
 
@@ -12,7 +11,7 @@ The tools are:
     Streamline selected tasks that are difficult (take a lot of
     steps) with the bare aptly. Most tasks require a suitable
     configuration in file ~/.aptly-flow.conf or /etc/aptly-flow.conf
-    (an example file is in the doc/ directory).
+    (an example file is in the examples/ directory).
 
   * dinstall-key
 
@@ -23,5 +22,8 @@ The tools are:
     (Assumes that vsFTPd is used as the FTP server to provide
     the upload queue for the dput program.)
 
-DISCLAIMER: The aptly-flow is not endorsed nor connected to
-the aptly or its author in any way.
+  * dinstall-{pre,post}
+
+    Pre- and post-install scripts for mini-dinstall.
+
+See INSTALL for installation instructions.

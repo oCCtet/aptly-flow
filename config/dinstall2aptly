@@ -1,0 +1,11 @@
+# /etc/sudoers.d/dinstall2aptly - allow user dinstall to run the
+# specific commands as user aptly
+
+User_Alias  USER_STAGE1  = dinstall
+Runas_Alias RUNAS_STAGE2 = aptly
+
+Cmnd_Alias STAGE2_CMD = /usr/local/bin/aptly-flow process incoming
+
+# Allow stage1 processor to run stage2 command
+# as the stage2 processor
+USER_STAGE1 ALL = (RUNAS_STAGE2) NOPASSWD: STAGE2_CMD

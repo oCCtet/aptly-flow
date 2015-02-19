@@ -1,0 +1,10 @@
+aptly-flow TODO
+===============
+
+ * mini-dinstall only verifies the upload GPG signature,
+   it does not check if the signer is allowed to upload
+   the package in question.
+     This could be achieved by extending the dinstall-pre
+   script to perform a filtering based on package name and
+   uploader key ID, or by switching from mini-dinstall to
+   reprepro which supports such filtering.

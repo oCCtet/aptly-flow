@@ -1,0 +1,48 @@
+aptly-flow INSTALL
+==================
+
+No build is needed, as all the programs are written in
+interpreted languages. At the moment 'make install' or
+any other installer is not available either.
+
+This document aims to give enough information for performing
+a manual installation.
+
+Depends:
+
+  * mini-dinstall
+  * aptly, version 0.9 or later
+  * Perl, version 5.18 or later
+
+Recommends:
+
+  * vsftpd
+
+Installation
+------------
+
+The recommended locations for local installation:
+
+  * /usr/local/lib/dinstall/
+       preinst  -> <path>src/dinstall-pre.pl
+       postinst -> <path>src/dinstall-post.sh
+
+  * /usr/local/bin/
+       dinstall-key -> <path>src/dinstall-key.pl
+       aptly-flow   -> <path>src/aptly-flow.pl
+
+The -> indicates a symbolic link. The <path> indicates
+the directory holding the aptly-flow code distribution.
+
+Configuration
+-------------
+
+Aptly should be run as a dedicated user 'aptly', which can
+be a non-system user for interactive user actions.
+
+The mini-dinstall daemon should be run as a system user 'dinstall',
+which is also the userid that shall own the uploaded files (as
+granted by vsftpd configuration).
+
+The examples directory holds example configuration files. The
+config directory holds daemon control script and sudoers files.
